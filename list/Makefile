@@ -1,1 +1,0 @@
-g++ -std=c++11 coarse_lock_list_test.cpp coarse_lock_list.cpp -o x -lpthread

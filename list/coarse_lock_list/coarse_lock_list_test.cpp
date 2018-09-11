@@ -83,6 +83,27 @@ void* test_rm(void* argv) {
     return NULL;
 }
 
+void* test_contains(void* argv) {
+    CoarseLockList* pl = ((ThreadArgv*) argv)->pl;
+    int b = ((ThreadArgv*) argv)->b;
+    int e = ((ThreadArgv*) argv)->e;
+    assert (b != e);
+    long dir = 1;
+    if (b > e) {
+        dir = -1;
+    }
+    for (int i = b; ; i += dir) {
+        if (dir > 0) {
+            if (i > e) break;
+        }
+        if (dir < 0) {
+            if (i < e) break;
+        }
+        pl->contains((long)i);
+    }
+    return NULL;
+}
+
 bool validate_permutations(const std::vector<long> & v) {
     return (v.size() == 0) ||
         (v.size() == 1 && (v[0] == 1 || v[1] == 2)) ||
@@ -191,14 +212,47 @@ void Test_performance_add(const int n_thread) {
     delete [] tid;
 }
 
+void Test_performance_contains(const int n_thread) {
+    CoarseLockList l;
+    std::vector<long> v;
+
+    pthread_t* tid = new pthread_t[n_thread];
+    ThreadArgv argv = ThreadArgv(&l, 1, 10000);
+
+    for (int i = 0; i < 10000; ++ i) {
+        l.add((long)i);
+    }
+
+    timeval begin;
+    timeval end;
+    gettimeofday(&begin, NULL);
+
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_create(&tid[i], NULL, test_contains, (void*)&argv); 
+    }
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_join(tid[i], NULL);
+    }
+
+    gettimeofday(&end, NULL);
+    std::cout << "Test performance: contains() with " << n_thread;
+    std::cout << " threads, consuming " << time_diff(begin, end) << " s" << std::endl;
+
+    delete [] tid;
+}
+
 void TEST_PERFORMANCE() {
     Test_performance_add(1);
     Test_performance_add(10);
     Test_performance_add(20);
     Test_performance_add(30);
-    Test_performance_add(40);
-    Test_performance_add(50);
     std::cout << "Test add performence successfully" << std::endl;
+
+    Test_performance_contains(1);
+    Test_performance_contains(10);
+    Test_performance_contains(20);
+    Test_performance_contains(30);
+    std::cout << "Test contains performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
 }
