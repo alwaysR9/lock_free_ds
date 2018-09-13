@@ -1,3 +1,6 @@
+#ifndef _COARSE_LOCK_LIST_H
+#define _COARSE_LOCK_LIST_H
+
 #include <vector>
 #include <pthread.h>
 
@@ -25,3 +28,5 @@ private:
     Node* _head;
     pthread_mutex_t _mutex;
 };
+
+#endif
