@@ -6,31 +6,52 @@
 #include <assert.h>
 #include <pthread.h>
 
-struct Node {
+extern int MUTEX_TYPE;
+
+class MyMutex {
+public:
+    MyMutex() {};
+    virtual ~MyMutex() {};
+
+    //*********** interface ***********//
+    virtual void lock() = 0;
+    virtual void unlock() = 0;
+};
+
+class Mutex : public MyMutex {
+public:
+    Mutex();
+    virtual ~Mutex();
+
+    virtual void lock();
+    virtual void unlock();
+private:
+    pthread_mutex_t mu;
+};
+
+class SpinLock : public MyMutex {
+public:
+    SpinLock();
+    virtual ~SpinLock();
+
+    virtual void lock();
+    virtual void unlock();
+private:
+    pthread_spinlock_t mu;
+};
+
+class Node {
+public:
     long val;
     Node* next;
-    pthread_mutex_t mutex;
+    MyMutex* mutex;
 
-    Node() {
-        this->val = 0;
-        this->next = NULL;
-        pthread_mutex_init(&mutex, NULL);
-    }
-    Node(long val, Node* next) {
-        this->val = val;
-        this->next = next;
-        pthread_mutex_init(&mutex, NULL);
-    }
-    ~Node() {
-        pthread_mutex_destroy(&mutex);
-    }
+    Node();
+    Node(long val, Node* next, int mutex_type);
+    ~Node();
 
-    void lock() {
-        assert(pthread_mutex_lock(&mutex) == 0);
-    }
-    void unlock() {
-        assert(pthread_mutex_unlock(&mutex) == 0);
-    }
+    void lock();
+    void unlock();
 };
 
 class FineGrainedLockList {
@@ -41,8 +62,8 @@ public:
     /**************** Interface ****************/
     // Thread safe
     bool add(const long val);
-    //bool rm(const long val);
-    //bool contains(const long val);
+    bool rm(const long val);
+    bool contains(const long val);
 
     /**************** Test ****************/
     // Not thread safe

@@ -19,7 +19,7 @@ void TEST_CORRECTNESS_SINGLE_THREAD() {
     CoarseLockList l;
     std::vector<long> v;
 
-    l.add(1), l.add(2), l.add(3), l.add(3);
+    l.add(1), l.add(3), l.add(2), l.add(3);
     v = l.vectorize();
     assert (v.size() == 3);
     assert (v[0] == 1);

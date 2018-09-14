@@ -19,29 +19,28 @@ void TEST_CORRECTNESS_SINGLE_THREAD() {
     FineGrainedLockList l;
     std::vector<long> v;
 
-    l.add(1), l.add(2), l.add(3), l.add(3);
+    l.add(1), l.add(3), l.add(2), l.add(3);
     v = l.vectorize();
     assert (v.size() == 3);
     assert (v[0] == 1);
     assert (v[1] == 2);
     assert (v[2] == 3);
 
-    //l.rm(1), l.rm(2), l.rm(2);
-    //v = l.vectorize();
-    //assert (v.size() == 1);
-    //assert (v[0] == 3);
+    l.rm(1), l.rm(2), l.rm(2);
+    v = l.vectorize();
+    assert (v.size() == 1);
+    assert (v[0] == 3);
 
-    //bool res1 = l.contains(3);
-    //bool res2 = l.contains(1);
-    //assert(res1 == true);
-    //assert(res2 == false);
+    bool res1 = l.contains(3);
+    bool res2 = l.contains(1);
+    assert(res1 == true);
+    assert(res2 == false);
 
     std::cout << "Test single thread correctness successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
 }
 
-/*
 void* test_add(void* argv) {
     FineGrainedLockList* pl = ((ThreadArgv*) argv)->pl;
     int b = ((ThreadArgv*) argv)->b;
@@ -241,28 +240,27 @@ void Test_performance_contains(const int n_thread) {
 
     delete [] tid;
 }
-
 void TEST_PERFORMANCE() {
-    Test_performance_add(1);
-    Test_performance_add(10);
-    Test_performance_add(20);
-    Test_performance_add(30);
+    Test_performance_add(5);
+    //Test_performance_add(4);
+    //Test_performance_add(4);
+    //Test_performance_add(4);
     std::cout << "Test add performence successfully" << std::endl;
 
-    Test_performance_contains(1);
-    Test_performance_contains(10);
-    Test_performance_contains(20);
-    Test_performance_contains(30);
+    //Test_performance_contains(1);
+    //Test_performance_contains(10);
+    //Test_performance_contains(20);
+    //Test_performance_contains(30);
     std::cout << "Test contains performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
-}*/
+}
 
 int main() {
     
     TEST_CORRECTNESS_SINGLE_THREAD();
-    //TEST_CORRECTNESS_MULTI_THREAD();
-    //TEST_PERFORMANCE();
+    TEST_CORRECTNESS_MULTI_THREAD();
+    TEST_PERFORMANCE();
 
     /*FineGrainedLockList l;
 
