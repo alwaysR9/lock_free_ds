@@ -241,10 +241,11 @@ void Test_performance_contains(const int n_thread) {
     delete [] tid;
 }
 void TEST_PERFORMANCE() {
+    Test_performance_add(1);
     Test_performance_add(5);
-    //Test_performance_add(4);
-    //Test_performance_add(4);
-    //Test_performance_add(4);
+    Test_performance_add(10);
+    Test_performance_add(20);
+    Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
     //Test_performance_contains(1);

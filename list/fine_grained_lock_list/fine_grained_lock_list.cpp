@@ -1,6 +1,8 @@
 #include "fine_grained_lock_list.h"
 
-int MUTEX_TYPE = 1;
+// 0: pthread_mutex_t
+// 1: pthread_spinlock_t
+int MUTEX_TYPE = 0;
 
 //------------------- lock -------------------//
 Mutex::Mutex() {
