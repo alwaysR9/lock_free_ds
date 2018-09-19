@@ -256,16 +256,16 @@ void Test_performance_contains(const int n_thread) {
     delete [] tid;
 }
 void TEST_PERFORMANCE() {
-    //Test_performance_add(1);
-    //Test_performance_add(10);
-    //Test_performance_add(20);
-    //Test_performance_add(30);
+    Test_performance_add(1);
+    Test_performance_add(10);
+    Test_performance_add(20);
+    Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
     Test_performance_contains(1);
     Test_performance_contains(10);
     Test_performance_contains(20);
-    //Test_performance_contains(30);
+    Test_performance_contains(30);
     std::cout << "Test contains performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;

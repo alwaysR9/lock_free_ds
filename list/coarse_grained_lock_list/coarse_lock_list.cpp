@@ -78,45 +78,45 @@ bool CoarseLockList::rm(const long val) {
     return succ;
 }
 
-//bool CoarseLockList::contains(const long val) {
-//    pthread_mutex_lock(&_mutex);
-//    Node** cur = &(_head->next);
-//    while (*cur != NULL && (*cur)->val != val) {
-//        cur = &((*cur)->next);
-//    }
-//    
-//    bool succ = true;
-//    if (*cur == NULL) {
-//        succ = false;
-//    }
-//    pthread_mutex_unlock(&_mutex);
-//    
-//    return succ;
-//}
-
 bool CoarseLockList::contains(const long val) {
     pthread_mutex_lock(&_mutex);
-    Node* pre = _head;
-    Node* cur = _head->next;
-
-    while (cur != NULL) {
-        if (val <= cur->val) {
-            break;
-        }
-        pre = cur;
-        cur = pre->next;
+    Node** cur = &(_head->next);
+    while (*cur != NULL && (*cur)->val != val) {
+        cur = &((*cur)->next);
     }
-
-    if (cur == NULL) {
-        pthread_mutex_unlock(&_mutex);
-        return false;
+    
+    bool succ = true;
+    if (*cur == NULL) {
+        succ = false;
     }
-
-    if (val == cur->val) {
-        pthread_mutex_unlock(&_mutex);
-        return true;
-    } else {
-        pthread_mutex_unlock(&_mutex);
-        return false;
-    }
+    pthread_mutex_unlock(&_mutex);
+    
+    return succ;
 }
+
+//bool CoarseLockList::contains(const long val) {
+//    pthread_mutex_lock(&_mutex);
+//    Node* pre = _head;
+//    Node* cur = _head->next;
+//
+//    while (cur != NULL) {
+//        if (val <= cur->val) {
+//            break;
+//        }
+//        pre = cur;
+//        cur = pre->next;
+//    }
+//
+//    if (cur == NULL) {
+//        pthread_mutex_unlock(&_mutex);
+//        return false;
+//    }
+//
+//    if (val == cur->val) {
+//        pthread_mutex_unlock(&_mutex);
+//        return true;
+//    } else {
+//        pthread_mutex_unlock(&_mutex);
+//        return false;
+//    }
+//}
