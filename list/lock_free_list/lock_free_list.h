@@ -1,6 +1,10 @@
 #ifndef _LOCK_FREE_LIST_H
 #define _LOCK_FREE_LIST_H
 
+#include <iostream>
+#include <vector>
+#include <atomic>
+
 class Node {
 public:
     Node() {}
@@ -10,9 +14,9 @@ public:
     bool is_mark();
     void mark();
     Node* get_next();
-private:
+
     long val;
-    Node* next_;
+    std::atomic<Node*> next_;
 };
 
 class LockFreeList {
