@@ -380,18 +380,21 @@ void Test_performance_multi_op(const int n_add_thread,
 
 void TEST_PERFORMANCE() {
     Test_performance_add(1);
+    Test_performance_add(5);
     Test_performance_add(10);
     Test_performance_add(20);
     Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
     Test_performance_rm(1);
+    Test_performance_rm(5);
     Test_performance_rm(10);
     Test_performance_rm(20);
     Test_performance_rm(30);
     std::cout << "Test rm performence successfully" << std::endl;
 
     Test_performance_contains(1);
+    Test_performance_contains(5);
     Test_performance_contains(10);
     Test_performance_contains(20);
     Test_performance_contains(30);
