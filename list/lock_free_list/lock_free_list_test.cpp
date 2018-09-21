@@ -121,7 +121,7 @@ void* test_contains(void* argv) {
 
 bool validate_permutations(const std::vector<long> & v) {
     return (v.size() == 0) ||
-        (v.size() == 1 && (v[0] == 1 || v[1] == 2)) ||
+        (v.size() == 1 && (v[0] == 1 || v[0] == 2)) ||
         (v.size() == 2 && (v[0] == 1 && v[1] == 2));
 }
 
@@ -129,43 +129,55 @@ void Test_multi_thread_add() {
     LockFreeList l;
     std::vector<long> v;
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 100);
-    ThreadArgv argv2 = ThreadArgv(&l, 100, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 10000);
+    ThreadArgv argv2 = ThreadArgv(&l, 10000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 1000, 8000);
+    ThreadArgv argv4 = ThreadArgv(&l, 5000, 1);
     pthread_create(&tid[0], NULL, test_add, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_add, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_add, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_add, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 100);
+    assert(v.size() == 10000);
     assert(v[0] == 1);
-    assert(v[99] == 100);
+    assert(v[9999] == 10000);
 }
 
 void Test_multi_thread_rm() {
     LockFreeList l;
     std::vector<long> v;
 
-    for (int i = 0; i < 100; ++ i) {
+    for (int i = 0; i < 10000; ++ i) {
         l.add((long)(i+1));
     }
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 50);
-    ThreadArgv argv2 = ThreadArgv(&l, 50, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 5000);
+    ThreadArgv argv2 = ThreadArgv(&l, 5000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 2000, 4000);
+    ThreadArgv argv4 = ThreadArgv(&l, 4500, 100);
     pthread_create(&tid[0], NULL, test_rm, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_rm, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_rm, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_rm, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 50);
-    assert(v[0] == 51);
-    assert(v[49] == 100);
+    assert(v.size() == 5000);
+    assert(v[0] == 5001);
+    assert(v[4999] == 10000);
 }
 
-void Test_multi_thread_add_and_rm() {
+void Test_multi_thread_add_and_rm_small() {
     LockFreeList l;
     std::vector<long> v;
 
@@ -185,15 +197,51 @@ void Test_multi_thread_add_and_rm() {
     assert(validate_permutations(v));
 }
 
+void Test_multi_thread_add_and_rm_big() {
+    LockFreeList l;
+
+    for (int i = 1; i <= 10000; ++ i) {
+        l.add((long) i);
+    }
+
+    pthread_t tid[8];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 10000);
+    ThreadArgv argv2 = ThreadArgv(&l, 3000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 6000, 3500);
+    ThreadArgv argv4 = ThreadArgv(&l, 2010, 8999);
+    ThreadArgv argv5 = ThreadArgv(&l, 3011, 7917);
+    ThreadArgv argv6 = ThreadArgv(&l, 7138, 1234);
+    ThreadArgv argv7 = ThreadArgv(&l, 10000, 1);
+    ThreadArgv argv8 = ThreadArgv(&l, 9216, 4289);
+    pthread_create(&tid[0], NULL, test_add, (void*)&argv1); 
+    pthread_create(&tid[1], NULL, test_rm, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_add, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_rm, (void*)&argv4); 
+    pthread_create(&tid[4], NULL, test_add, (void*)&argv5); 
+    pthread_create(&tid[5], NULL, test_rm, (void*)&argv6); 
+    pthread_create(&tid[6], NULL, test_contains, (void*)&argv7); 
+    pthread_create(&tid[7], NULL, test_contains, (void*)&argv8); 
+    pthread_join(tid[0], NULL);
+    pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
+    pthread_join(tid[4], NULL);
+    pthread_join(tid[5], NULL);
+    pthread_join(tid[6], NULL);
+    pthread_join(tid[7], NULL);
+}
+
 void TEST_CORRECTNESS_MULTI_THREAD() {
     Test_multi_thread_add();
-    std::cout << "Test multi thread add successfuly" << std::endl;
+    std::cout << "Test multi thread add successfully" << std::endl;
 
     Test_multi_thread_rm();
-    std::cout << "Test multi thread rm successfuly" << std::endl;
+    std::cout << "Test multi thread rm successfully" << std::endl;
 
-    Test_multi_thread_add_and_rm();
-    std::cout << "Test multi thread add & rm successfuly" << std::endl;
+    Test_multi_thread_add_and_rm_small();
+    std::cout << "Test multi thread add & rm small successfully" << std::endl;
+    Test_multi_thread_add_and_rm_big();
+    std::cout << "Test multi thread add & rm big successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
 }
@@ -275,7 +323,7 @@ int main() {
     
     TEST_CORRECTNESS_SINGLE_THREAD();
     TEST_CORRECTNESS_MULTI_THREAD();
-    TEST_PERFORMANCE();
+    //TEST_PERFORMANCE();
 
     /*LockFreeList l;
 

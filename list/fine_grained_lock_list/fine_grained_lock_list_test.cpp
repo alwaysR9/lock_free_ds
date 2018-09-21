@@ -106,7 +106,7 @@ void* test_contains(void* argv) {
 
 bool validate_permutations(const std::vector<long> & v) {
     return (v.size() == 0) ||
-        (v.size() == 1 && (v[0] == 1 || v[1] == 2)) ||
+        (v.size() == 1 && (v[0] == 1 || v[0] == 2)) ||
         (v.size() == 2 && (v[0] == 1 && v[1] == 2));
 }
 
@@ -114,40 +114,52 @@ void Test_multi_thread_add() {
     FineGrainedLockList l;
     std::vector<long> v;
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 100);
-    ThreadArgv argv2 = ThreadArgv(&l, 100, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 10000);
+    ThreadArgv argv2 = ThreadArgv(&l, 10000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 1000, 8000);
+    ThreadArgv argv4 = ThreadArgv(&l, 5000, 1);
     pthread_create(&tid[0], NULL, test_add, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_add, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_add, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_add, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 100);
+    assert(v.size() == 10000);
     assert(v[0] == 1);
-    assert(v[99] == 100);
+    assert(v[9999] == 10000);
 }
 
 void Test_multi_thread_rm() {
     FineGrainedLockList l;
     std::vector<long> v;
 
-    for (int i = 0; i < 100; ++ i) {
+    for (int i = 0; i < 10000; ++ i) {
         l.add((long)(i+1));
     }
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 50);
-    ThreadArgv argv2 = ThreadArgv(&l, 50, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 5000);
+    ThreadArgv argv2 = ThreadArgv(&l, 5000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 2000, 4000);
+    ThreadArgv argv4 = ThreadArgv(&l, 4500, 100);
     pthread_create(&tid[0], NULL, test_rm, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_rm, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_rm, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_rm, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 50);
-    assert(v[0] == 51);
-    assert(v[49] == 100);
+    assert(v.size() == 5000);
+    assert(v[0] == 5001);
+    assert(v[4999] == 10000);
 }
 
 void Test_multi_thread_add_and_rm() {

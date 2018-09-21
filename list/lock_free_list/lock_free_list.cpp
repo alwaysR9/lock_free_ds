@@ -1,5 +1,7 @@
 #include "lock_free_list.h"
 
+#include <assert.h>
+
 Node::Node(long val, Node* next) {
     this->val = val;
     this->next_ = next;
@@ -18,11 +20,16 @@ Node* Node::get_next() {
 }
 
 LockFreeList::LockFreeList() {
-    head_ = new Node(0, NULL);
+    head_ = new Node(-1, NULL);
 }
 
 LockFreeList::~LockFreeList() {
-
+    while (head_->get_next() != NULL) {
+        Node* node = head_->get_next();
+        head_->next_ = node->get_next();
+        delete node;
+    }
+    delete head_;
 }
 
 bool LockFreeList::add(const long val) {
@@ -34,22 +41,24 @@ bool LockFreeList::add(const long val) {
         if (cur->is_mark()) {
             Node* next = cur->get_next();
             if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, next)) {
-                std::cout << "marked node has been deleted by other thread during Tranverse" << std::endl;
+                if (pre->is_mark()) {
+                    return false;
+                }
             }
-            cur = pre->next_;
+            cur = pre->get_next();
             continue;
         }
         if (val <= cur->val) {
             break;
         }
         pre = cur;
-        cur = pre->next_;
+        cur = pre->get_next();
     }
 
     if (cur == NULL) {
         Node* node = new Node(val, NULL);
         if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, node)) {
-            std::cout << "insert node failed_x " << val << std::endl;
+            delete node;
             return false;
         }
         return true;
@@ -60,7 +69,7 @@ bool LockFreeList::add(const long val) {
     } else { // val < cur->val
         Node* node = new Node(val, cur);
         if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, node)) {
-            std::cout << "insert node failed_y " << val << std::endl;
+            delete node;
             return false;
         }
         return true;
@@ -68,7 +77,7 @@ bool LockFreeList::add(const long val) {
 }
 
 bool LockFreeList::rm(const long val) {
-    // delete node with val == cur
+    // delete node with val == cur->val
     Node* pre = head_;
     Node* cur = head_->next_;
 
@@ -76,16 +85,21 @@ bool LockFreeList::rm(const long val) {
         if (cur->is_mark()) {
             Node* next = cur->get_next();
             if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, next)) {
-                std::cout << "marked node has been deleted by other thread during Tranverse" << std::endl;
+                // pre node has been delete logically
+                if (pre->is_mark()) {
+                    return false;
+                }
+                // cur node has been delete physically
+                // need do nothing
             }
-            cur = pre->next_;
+            cur = pre->get_next();
             continue;
         }
         if (val <= cur->val) {
             break;
         }
         pre = cur;
-        cur = pre->next_;
+        cur = pre->get_next();
     }
 
     if (cur == NULL) {
@@ -96,7 +110,7 @@ bool LockFreeList::rm(const long val) {
         cur->mark();
         Node* next = cur->get_next();
         if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, next)) {
-            std::cout << "marked node has been deleted by other thread" << std::endl;
+            //std::cout << "marked node has been deleted by other thread" << std::endl;
         }
         return true;
     } else { // val < cur->val
@@ -105,23 +119,17 @@ bool LockFreeList::rm(const long val) {
 }
 
 bool LockFreeList::contains(const long val) {
-    Node* pre = head_;
     Node* cur = head_->next_;
 
     while (cur != NULL) {
         if (cur->is_mark()) {
-            Node* next = cur->get_next();
-            if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, next)) {
-                std::cout << "marked node has been deleted by other thread during Tranverse" << std::endl;
-            }
-            cur = pre->next_;
+            cur = cur->get_next();
             continue;
         }
         if (val <= cur->val) {
             break;
         }
-        pre = cur;
-        cur = pre->next_.load();
+        cur = cur->get_next();
     }
 
     if (cur == NULL) {
@@ -140,6 +148,10 @@ std::vector<long> LockFreeList::vectorize() {
     
     Node* cur = head_->next_;
     while (cur) {
+        if (cur->is_mark()) {
+            cur = cur->get_next();
+            continue;
+        }
         v.push_back(cur->val);
         cur = cur->get_next();
     }

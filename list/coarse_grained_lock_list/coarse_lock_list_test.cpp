@@ -106,7 +106,7 @@ void* test_contains(void* argv) {
 
 bool validate_permutations(const std::vector<long> & v) {
     return (v.size() == 0) ||
-        (v.size() == 1 && (v[0] == 1 || v[1] == 2)) ||
+        (v.size() == 1 && (v[0] == 1 || v[0] == 2)) ||
         (v.size() == 2 && (v[0] == 1 && v[1] == 2));
 }
 
