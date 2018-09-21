@@ -1,6 +1,8 @@
 #include <iostream>
+#include <pthread.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <atomic>
 
 #include "coarse_lock_list.h"
 
@@ -9,6 +11,11 @@ struct ThreadArgv {
     int b, e;
     ThreadArgv() {}
     ThreadArgv(CoarseLockList* pl, int b, int e) {
+        this->pl = pl;
+        this->b = b;
+        this->e = e;
+    }
+    void init(CoarseLockList* pl, int b, int e) {
         this->pl = pl;
         this->b = b;
         this->e = e;
@@ -114,43 +121,55 @@ void Test_multi_thread_add() {
     CoarseLockList l;
     std::vector<long> v;
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 100);
-    ThreadArgv argv2 = ThreadArgv(&l, 100, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 10000);
+    ThreadArgv argv2 = ThreadArgv(&l, 10000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 1000, 8000);
+    ThreadArgv argv4 = ThreadArgv(&l, 5000, 1);
     pthread_create(&tid[0], NULL, test_add, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_add, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_add, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_add, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 100);
+    assert(v.size() == 10000);
     assert(v[0] == 1);
-    assert(v[99] == 100);
+    assert(v[9999] == 10000);
 }
 
 void Test_multi_thread_rm() {
     CoarseLockList l;
     std::vector<long> v;
 
-    for (int i = 0; i < 100; ++ i) {
+    for (int i = 0; i < 10000; ++ i) {
         l.add((long)(i+1));
     }
 
-    pthread_t tid[2];
-    ThreadArgv argv1 = ThreadArgv(&l, 1, 50);
-    ThreadArgv argv2 = ThreadArgv(&l, 50, 1);
+    pthread_t tid[4];
+    ThreadArgv argv1 = ThreadArgv(&l, 1, 5000);
+    ThreadArgv argv2 = ThreadArgv(&l, 5000, 1);
+    ThreadArgv argv3 = ThreadArgv(&l, 2000, 4000);
+    ThreadArgv argv4 = ThreadArgv(&l, 4500, 100);
     pthread_create(&tid[0], NULL, test_rm, (void*)&argv1); 
     pthread_create(&tid[1], NULL, test_rm, (void*)&argv2); 
+    pthread_create(&tid[2], NULL, test_rm, (void*)&argv3); 
+    pthread_create(&tid[3], NULL, test_rm, (void*)&argv4); 
     pthread_join(tid[0], NULL);
     pthread_join(tid[1], NULL);
+    pthread_join(tid[2], NULL);
+    pthread_join(tid[3], NULL);
  
     v = l.vectorize();
-    assert(v.size() == 50);
-    assert(v[0] == 51);
-    assert(v[49] == 100);
+    assert(v.size() == 5000);
+    assert(v[0] == 5001);
+    assert(v[4999] == 10000);
 }
 
-void Test_multi_thread_add_and_rm() {
+void Test_multi_thread_add_and_rm_small() {
     CoarseLockList l;
     std::vector<long> v;
 
@@ -170,15 +189,58 @@ void Test_multi_thread_add_and_rm() {
     assert(validate_permutations(v));
 }
 
+void Test_multi_thread_add_and_rm_big() {
+    CoarseLockList l;
+
+    for (int i = 1; i <= 10000; ++ i) {
+        l.add((long) i);
+    }
+
+    int n_add_thread = 3;
+    int n_rm_thread = 3;
+    int n_contains_thread = 2;
+    int n_thread = n_add_thread + n_rm_thread + n_contains_thread;
+
+    pthread_t* tid = new pthread_t[n_thread];
+    ThreadArgv* argv = new ThreadArgv[n_thread];
+    argv[0].init(&l, 1, 10000);
+    argv[1].init(&l, 3000, 1);
+    argv[2].init(&l, 6000, 3500);
+    argv[3].init(&l, 2010, 8999);
+    argv[4].init(&l, 3011, 7917);
+    argv[5].init(&l, 7138, 1234);
+    argv[6].init(&l, 10000, 1);
+    argv[7].init(&l, 9216, 4289);
+
+    for (int i = 0; i < n_thread; ++ i) {
+        if (i < n_add_thread) {
+            pthread_create(&tid[i], NULL, test_add, (void*)&argv[i]); 
+        } else if (i >= n_add_thread && i < n_add_thread + n_rm_thread) {
+            pthread_create(&tid[i], NULL, test_rm, (void*)&argv[i]); 
+        } else {
+            pthread_create(&tid[i], NULL, test_contains, (void*)&argv[i]); 
+        }
+    }
+
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_join(tid[i], NULL);
+    }
+
+    delete [] tid;
+    delete [] argv;
+}
+
 void TEST_CORRECTNESS_MULTI_THREAD() {
     Test_multi_thread_add();
-    std::cout << "Test multi thread add successfuly" << std::endl;
+    std::cout << "Test multi thread add successfully" << std::endl;
 
     Test_multi_thread_rm();
-    std::cout << "Test multi thread rm successfuly" << std::endl;
+    std::cout << "Test multi thread rm successfully" << std::endl;
 
-    Test_multi_thread_add_and_rm();
-    std::cout << "Test multi thread add & rm successfuly" << std::endl;
+    Test_multi_thread_add_and_rm_small();
+    std::cout << "Test multi thread add & rm small successfully" << std::endl;
+    Test_multi_thread_add_and_rm_big();
+    std::cout << "Test multi thread add & rm big successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
 }
@@ -207,6 +269,35 @@ void Test_performance_add(const int n_thread) {
 
     gettimeofday(&end, NULL);
     std::cout << "Test performance: add() with " << n_thread;
+    std::cout << " threads, consuming " << time_diff(begin, end) << " s" << std::endl;
+
+    delete [] tid;
+}
+
+void Test_performance_rm(const int n_thread) {
+    CoarseLockList l;
+    std::vector<long> v;
+
+    for (int i = 1; i <= 10000; ++ i) {
+        l.add((long) i);
+    }
+
+    pthread_t* tid = new pthread_t[n_thread];
+    ThreadArgv argv = ThreadArgv(&l, 1, 10000);
+
+    timeval begin;
+    timeval end;
+    gettimeofday(&begin, NULL);
+
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_create(&tid[i], NULL, test_rm, (void*)&argv); 
+    }
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_join(tid[i], NULL);
+    }
+
+    gettimeofday(&end, NULL);
+    std::cout << "Test performance: rm() with " << n_thread;
     std::cout << " threads, consuming " << time_diff(begin, end) << " s" << std::endl;
 
     delete [] tid;
@@ -241,6 +332,52 @@ void Test_performance_contains(const int n_thread) {
     delete [] tid;
 }
 
+void Test_performance_multi_op(const int n_add_thread,
+                               const int n_rm_thread,
+                               const int n_contains_thread) {
+    CoarseLockList l;
+    std::vector<long> v;
+
+    int n_thread = n_add_thread + n_rm_thread + n_contains_thread;
+    pthread_t* tid = new pthread_t[n_thread];
+    ThreadArgv* argv = new ThreadArgv[3];
+
+    argv[0].init(&l, 1, 10000);
+    argv[1].init(&l, 10000, 1);
+    argv[2].init(&l, 10000, 1);
+
+    for (int i = 0; i < 10000; ++ i) {
+        l.add((long)i);
+    }
+
+    timeval begin;
+    timeval end;
+    gettimeofday(&begin, NULL);
+
+    for (int i = 0; i < n_thread; ++ i) {
+        if (i < n_add_thread) {
+            pthread_create(&tid[i], NULL, test_add, (void*)&argv[0]);
+        } else if (i >= n_add_thread && i < n_add_thread + n_rm_thread) {
+            pthread_create(&tid[i], NULL, test_rm, (void*)&argv[1]);
+        } else {
+            pthread_create(&tid[i], NULL, test_contains, (void*)&argv[2]); 
+        }
+    }
+    for (int i = 0; i < n_thread; ++ i) {
+        pthread_join(tid[i], NULL);
+    }
+
+    gettimeofday(&end, NULL);
+    std::cout << "Test performance: multi op with " << n_thread << "thread, ";
+    std::cout << " add_threads: " << n_add_thread << ",";
+    std::cout << " rm_threads: " << n_rm_thread << ",";
+    std::cout << " contains_threads: " << n_contains_thread << ",";
+    std::cout << " consuming " << time_diff(begin, end) << " s" << std::endl;
+
+    delete [] tid;
+    delete [] argv;
+}
+
 void TEST_PERFORMANCE() {
     Test_performance_add(1);
     Test_performance_add(10);
@@ -248,11 +385,27 @@ void TEST_PERFORMANCE() {
     Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
+    Test_performance_rm(1);
+    Test_performance_rm(10);
+    Test_performance_rm(20);
+    Test_performance_rm(30);
+    std::cout << "Test rm performence successfully" << std::endl;
+
     Test_performance_contains(1);
     Test_performance_contains(10);
     Test_performance_contains(20);
     Test_performance_contains(30);
     std::cout << "Test contains performence successfully" << std::endl;
+
+    Test_performance_multi_op(1+1, 0, 8);
+    Test_performance_multi_op(4+4, 0, 2);
+
+    Test_performance_multi_op(2+2, 0, 16);
+    Test_performance_multi_op(8+8, 0, 4);
+
+    Test_performance_multi_op(3+3, 0, 24);
+    Test_performance_multi_op(12+12, 0, 6);
+    std::cout << "Test multi op performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
 }
