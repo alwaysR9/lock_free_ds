@@ -61,14 +61,14 @@ bool CoarseLockList::add(const long val) {
 bool CoarseLockList::rm(const long val) {
     pthread_mutex_lock(&_mutex);
     Node** cur = &(_head->next);
-    while (*cur != NULL && (*cur)->val != val) {
+    while (*cur != NULL && (*cur)->val < val) {
         cur = &((*cur)->next);
     }
     
     bool succ = true;
     if (*cur == NULL) {
         succ = false;
-    } else {
+    } else if ((*cur)->val == val) {
         Node* node = *cur;
         *cur = (*cur)->next;
         delete node;
@@ -81,12 +81,14 @@ bool CoarseLockList::rm(const long val) {
 bool CoarseLockList::contains(const long val) {
     pthread_mutex_lock(&_mutex);
     Node** cur = &(_head->next);
-    while (*cur != NULL && (*cur)->val != val) {
+    while (*cur != NULL && (*cur)->val < val) {
         cur = &((*cur)->next);
     }
     
     bool succ = true;
     if (*cur == NULL) {
+        succ = false;
+    } else if ((*cur)->val > val) {
         succ = false;
     }
     pthread_mutex_unlock(&_mutex);

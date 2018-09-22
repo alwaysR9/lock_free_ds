@@ -2,7 +2,6 @@
 #include <pthread.h>
 #include <assert.h>
 #include <sys/time.h>
-#include <atomic>
 
 #include "fine_grained_lock_list.h"
 

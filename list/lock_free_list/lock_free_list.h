@@ -49,6 +49,7 @@ public:
     /**************** Test ****************/
     // Not thread safe
     std::vector<long> vectorize();
+
 private:
     Node* head_;
 };
