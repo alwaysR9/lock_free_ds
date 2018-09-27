@@ -36,10 +36,11 @@ bool LockFreeList::add(const long val) {
                     rcu_->rm_thread(tid);
                     return false;
                 }
+            } else {
+                // remove cur node from list logically,
+                // so add cur node for batch reclaimming
+                rcu_->add_reclaim_resource(cur);
             }
-            // remove cur node from list logically,
-            // so add cur node for batch reclaimming
-            rcu_->add_reclaim_resource(cur);
             cur = pre->get_next();
             continue;
         }
@@ -95,10 +96,11 @@ bool LockFreeList::rm(const long val) {
                 }
                 // cur node has been delete physically
                 // need do nothing
+            } else {
+                // remove cur node from list logically,
+                // so add cur node for batch reclaimming
+                rcu_->add_reclaim_resource(cur);
             }
-            // remove cur node from list logically,
-            // so add cur node for batch reclaimming
-            rcu_->add_reclaim_resource(cur);
             cur = pre->get_next();
             continue;
         }
@@ -119,10 +121,11 @@ bool LockFreeList::rm(const long val) {
         Node* next = cur->get_next();
         if (!std::atomic_compare_exchange_strong(&pre->next_, &cur, next)) {
             // cur node has been removed from list logically
+        } else {
+            // remove cur node from list logically,
+            // so add cur node for batch reclaimming
+            rcu_->add_reclaim_resource(cur);
         }
-        // remove cur node from list logically,
-        // so add cur node for batch reclaimming
-        rcu_->add_reclaim_resource(cur);
         rcu_->rm_thread(tid);
         return true;
     } else { // val < cur->val
