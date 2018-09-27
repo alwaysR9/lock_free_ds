@@ -79,8 +79,6 @@ void TEST(const int n_del_thread, const int n_norm_thread) {
         assert(pthread_create(&tid2[i], NULL, norm_thread, (void*)&argv2[i]) == 0);
     }
 
-    usleep(1000 * 5000);
-
     for (int i = 0; i < n_norm_thread; ++ i) {
         assert(pthread_join(tid2[i], NULL) == 0);
     }
@@ -88,15 +86,17 @@ void TEST(const int n_del_thread, const int n_norm_thread) {
         assert(pthread_join(tid1[i], NULL) == 0);
     }
 
+    rcu.kill_bg_reclaim_thread();
+
     delete [] argv1;
     delete [] tid1;
     delete [] argv2;
     delete [] tid2;
     pthread_mutex_destroy(&mutex);
 
-    assert(rcu.threads_.size() == 0);
-    assert(rcu.thread_index_.size() == 0);
-    assert(rcu.nodes_.size() == 0);
+    assert(rcu.get_thread_queue_size() == 0);
+    assert(rcu.get_thread_index_size() == 0);
+    assert(rcu.get_resource_queue_size() == 0);
     std::cout << "SUCCESS" << std::endl;
 }
 

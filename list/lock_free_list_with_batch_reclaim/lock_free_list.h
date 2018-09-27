@@ -6,6 +6,7 @@
 #include <atomic>
 
 #include "list_node.h"
+#include "rcu.h"
 
 /*
 * In concurrent mode, multithreads call rm() function,
@@ -40,6 +41,7 @@ public:
 
 private:
     Node* head_;
+    RCU* rcu_;
 };
 
 #endif
