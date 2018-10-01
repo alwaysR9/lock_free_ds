@@ -69,9 +69,11 @@ private:
     void run_bg_reclaim_thread();
     static void* run_bg_reclaim_thread_wrapper(void* argv) {
         ((RCU*)argv)->run_bg_reclaim_thread();
-        return NULL;
+        pthread_exit(NULL);
     }
     std::atomic<bool> is_over_;
+    std::atomic<bool> should_over_;
+    pthread_t bg_tid_;
 
     // debug
     // not thread safe

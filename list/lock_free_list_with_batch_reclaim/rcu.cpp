@@ -5,10 +5,34 @@
 RCU::RCU() {
     epoch_ = 0;
     is_over_.store(false);
+    should_over_.store(false);
     pthread_mutex_init(&mutex_, NULL);
 }
 RCU::~RCU() {
-    pthread_mutex_destroy(&mutex_);
+    // kill the background thread
+    is_over_.store(true);
+    pthread_join(bg_tid_, NULL);
+    // reclaim resource
+    while (true) {
+        if (should_over_.load()) {
+            // reclaim resource
+            threads_.clear();
+            thread_index_.clear();
+            for (std::list<NodeItem>::iterator i = nodes_.begin();
+                 i != nodes_.end(); ++ i) {
+                delete i->node;
+            }
+            nodes_.clear();
+            node_hash_.clear();
+            pthread_mutex_destroy(&mutex_);
+            assert(this->get_thread_queue_size() == 0);
+            assert(this->get_thread_index_size() == 0);
+            assert(this->get_resource_queue_size() == 0);
+            break;
+        } else {
+            usleep(1000 * 10);
+        }
+    }
 }
 
 void RCU::run_bg_reclaim_thread() {
@@ -42,19 +66,11 @@ void RCU::run_bg_reclaim_thread() {
         }
         assert(pthread_mutex_unlock(&mutex_) == 0);
     }
-    //std::cout << "Quit from background thread" << std::endl;
+    should_over_.store(true);
 }
 
 void RCU::start_bg_reclaim_thread() {
-    pthread_t tid;
-    assert(pthread_create(&tid, NULL, &RCU::run_bg_reclaim_thread_wrapper, this) == 0);
-    assert(pthread_detach(tid) == 0);
-}
-
-void RCU::kill_bg_reclaim_thread() {
-    sleep(5);
-    is_over_.store(true);
-    sleep(5);
+    assert(pthread_create(&bg_tid_, NULL, &RCU::run_bg_reclaim_thread_wrapper, this) == 0);
 }
 
 void RCU::add_thread(const unsigned int tid) {

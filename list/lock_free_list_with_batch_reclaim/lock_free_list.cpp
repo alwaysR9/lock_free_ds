@@ -17,7 +17,7 @@ LockFreeList::~LockFreeList() {
     }
     delete head_;
 
-    rcu_->kill_bg_reclaim_thread();
+    delete rcu_;
 }
 
 bool LockFreeList::add(const long val) {
@@ -171,11 +171,14 @@ std::vector<long> LockFreeList::vectorize() {
     Node* cur = head_->next_;
     while (cur) {
         if (cur->is_mark()) {
+            //std::cout << -1 << " ";
             cur = cur->get_next();
             continue;
         }
+        //std::cout << cur->val << " ";
         v.push_back(cur->val);
         cur = cur->get_next();
     }
+    //std::cout << std::endl;
     return v;
 }
