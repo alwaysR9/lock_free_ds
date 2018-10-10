@@ -21,7 +21,11 @@ Lock-Free List
 
 #### 添加操作
 ![The Performance of Add](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Add_to_list_performance.png)
+链表初始化为空，开启多线程，每个线程插入10000个互异元素，结果说明：<br>
+随着线程数量增加，无锁链表耗时变化不大（scaling能力最强）; 粗粒度锁耗时与线程数量成反比; 虽然细粒度锁的并发程度明显高于粗粒度锁（细粒度锁CPU使用率400%，粗粒度锁CPU使用率100%），但是细粒度锁耗时超过粗粒度锁（可能由于频繁的加锁，解锁导致）。<br>
 #### 删除操作
 ![The Performance of Delete](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Delete_to_list_performance.png)
+链表初始化包含10000个互异元素，开始多线程，每个线程对链表中的10000个元素进行删除操作，结果说明：<br>
+除了带有垃圾回收的同步方式外，其余同步方式性能基本相同; 由于进行垃圾回收时，所有线程遭阻塞，另外垃圾回收还涉及额外的锁操作作为overhead，所以无锁+垃圾回收方式在删除元素时，性能最低。<br>
 #### 40%添加，40%查询，20%删除
 ![The Performance of 40% Add, 40% Loop up, 20% Delete](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/mixed_op_to_list_performance.png)
