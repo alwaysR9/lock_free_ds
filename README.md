@@ -13,12 +13,15 @@ Lock-Free List
   * 无锁（lock_free_list）
     - 由于增加，删除操作，仅需要修改前趋的next指针，使用原子操作修改前趋的next指针，移除所有锁操作
   * 无锁+垃圾回收（lock_free_rcu_list）
-    - 原子操作删除的节点，需要进行内存释放（垃圾回收），在对比了引用计数和批量延迟回收两种方法后，使用批量延迟回收方式
+    - 原子操作删除的节点，需要进行内存释放（垃圾回收），在对比了引用计数和批量回收两种方法后，使用批量回收方式
 
 ## 效果对比
 #### 实验机器配置
 8核心，支持8个线程，32GB内存
 
 #### 添加操作
+![The Performance of Add](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Add_to_list_performance.png)
 #### 删除操作
+![The Performance of Delete](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Delete_to_list_performance.png)
 #### 40%添加，40%查询，20%删除
+![The Performance of 40% Add, 40% Loop up, 20% Delete](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/mixed_op_to_list_performance.png)
