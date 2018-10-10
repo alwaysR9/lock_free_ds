@@ -451,17 +451,17 @@ void TEST_PERFORMANCE() {
     Test_performance_add(20);
     std::cout << "Test add performence successfully" << std::endl;
 
-    //Test_performance_rm(1);
-    //Test_performance_rm(5);
-    //Test_performance_rm(10);
-    //Test_performance_rm(20);
-    //std::cout << "Test rm performence successfully" << std::endl;
+    Test_performance_rm(1);
+    Test_performance_rm(5);
+    Test_performance_rm(10);
+    Test_performance_rm(20);
+    std::cout << "Test rm performence successfully" << std::endl;
 
-    //Test_performance_contains(1);
-    //Test_performance_contains(5);
-    //Test_performance_contains(10);
-    //Test_performance_contains(20);
-    //std::cout << "Test contains performence successfully" << std::endl;
+    Test_performance_contains(1);
+    Test_performance_contains(5);
+    Test_performance_contains(10);
+    Test_performance_contains(20);
+    std::cout << "Test contains performence successfully" << std::endl;
 
     Test_performance_hybird(2, 1, 2, 10);
     Test_performance_hybird(4, 2, 4, 10);
@@ -474,8 +474,8 @@ void TEST_PERFORMANCE() {
 int main() {
     
     srand((unsigned int)time(NULL));
-    //TEST_CORRECTNESS_SINGLE_THREAD();
-    //TEST_CORRECTNESS_MULTI_THREAD();
+    TEST_CORRECTNESS_SINGLE_THREAD();
+    TEST_CORRECTNESS_MULTI_THREAD();
     TEST_PERFORMANCE();
 
     /*CoarseLockList l;
