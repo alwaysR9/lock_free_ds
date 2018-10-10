@@ -388,7 +388,7 @@ double Test_performance_multi_op(const int n_add_thread,
     // each operation range is [1, 10000]
     for (int i = 0; i < n_thread; ++ i) {
         std::vector<long> v;
-        for (int j = 0; j < 10000; ++ j) {
+        for (int j = 0; j < 2000; ++ j) {
             int r = rand() % 10000 + 1;
             v.push_back((long) r);
         }
@@ -449,25 +449,23 @@ void TEST_PERFORMANCE() {
     Test_performance_add(5);
     Test_performance_add(10);
     Test_performance_add(20);
-    //Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
     //Test_performance_rm(1);
     //Test_performance_rm(5);
     //Test_performance_rm(10);
     //Test_performance_rm(20);
-    //Test_performance_rm(30);
     //std::cout << "Test rm performence successfully" << std::endl;
 
     //Test_performance_contains(1);
     //Test_performance_contains(5);
     //Test_performance_contains(10);
     //Test_performance_contains(20);
-    //Test_performance_contains(30);
     //std::cout << "Test contains performence successfully" << std::endl;
 
-    Test_performance_hybird(2, 1, 2, 1);
-    Test_performance_hybird(4, 2, 4, 1);
+    Test_performance_hybird(2, 1, 2, 10);
+    Test_performance_hybird(4, 2, 4, 10);
+    Test_performance_hybird(6, 3, 6, 10);
     std::cout << "Test multi op performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;

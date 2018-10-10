@@ -2,12 +2,15 @@
 #include <pthread.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <stdlib.h>
+#include <vector>
 
 #include "fine_grained_lock_list.h"
 
 struct ThreadArgv {
     FineGrainedLockList* pl;
     int b, e;
+    std::vector<long> v;
     ThreadArgv() {}
     ThreadArgv(FineGrainedLockList* pl, int b, int e) {
         this->pl = pl;
@@ -18,6 +21,9 @@ struct ThreadArgv {
         this->pl = pl;
         this->b = b;
         this->e = e;
+    }
+    void add_rand_seq(const std::vector<long> & v) {
+        this->v = v;
     }
 };
 
@@ -106,6 +112,42 @@ void* test_contains(void* argv) {
             if (i < e) break;
         }
         pl->contains((long)i);
+    }
+    return NULL;
+}
+
+void* rand_test_add(void* argv) {
+    FineGrainedLockList* pl = ((ThreadArgv*) argv)->pl;
+    int b = ((ThreadArgv*) argv)->b;
+    int e = ((ThreadArgv*) argv)->e;
+    std::vector<long> v = ((ThreadArgv*) argv)->v;
+    assert (b != e);
+    for (int i = 0; i < v.size(); ++ i) {
+        pl->add(v[i]);
+    }
+    return NULL;
+}
+
+void* rand_test_rm(void* argv) {
+    FineGrainedLockList* pl = ((ThreadArgv*) argv)->pl;
+    int b = ((ThreadArgv*) argv)->b;
+    int e = ((ThreadArgv*) argv)->e;
+    std::vector<long> v = ((ThreadArgv*) argv)->v;
+    assert (b != e);
+    for (int i = 0; i < v.size(); ++ i) {
+        pl->rm(v[i]);
+    }
+    return NULL;
+}
+
+void* rand_test_contains(void* argv) {
+    FineGrainedLockList* pl = ((ThreadArgv*) argv)->pl;
+    int b = ((ThreadArgv*) argv)->b;
+    int e = ((ThreadArgv*) argv)->e;
+    std::vector<long> v = ((ThreadArgv*) argv)->v;
+    assert (b != e);
+    for (int i = 0; i < v.size(); ++ i) {
+        pl->contains(v[i]);
     }
     return NULL;
 }
@@ -331,7 +373,7 @@ void Test_performance_contains(const int n_thread) {
     delete [] tid;
 }
 
-void Test_performance_multi_op(const int n_add_thread,
+double Test_performance_multi_op(const int n_add_thread,
                                const int n_rm_thread,
                                const int n_contains_thread) {
     FineGrainedLockList l;
@@ -339,11 +381,19 @@ void Test_performance_multi_op(const int n_add_thread,
 
     int n_thread = n_add_thread + n_rm_thread + n_contains_thread;
     pthread_t* tid = new pthread_t[n_thread];
-    ThreadArgv* argv = new ThreadArgv[3];
+    ThreadArgv* argv = new ThreadArgv[n_thread];
 
-    argv[0].init(&l, 1, 10000);
-    argv[1].init(&l, 10000, 1);
-    argv[2].init(&l, 10000, 1);
+    // each operation sequence contains 2000 op,
+    // each operation range is [1, 10000]
+    for (int i = 0; i < n_thread; ++ i) {
+        std::vector<long> v;
+        for (int j = 0; j < 2000; ++ j) {
+            int r = rand() % 10000 + 1;
+            v.push_back((long) r);
+        }
+        argv[i].init(&l, 0, 1);
+        argv[i].add_rand_seq(v);
+    }
 
     for (int i = 0; i < 10000; ++ i) {
         l.add((long)i);
@@ -355,11 +405,11 @@ void Test_performance_multi_op(const int n_add_thread,
 
     for (int i = 0; i < n_thread; ++ i) {
         if (i < n_add_thread) {
-            pthread_create(&tid[i], NULL, test_add, (void*)&argv[0]);
+            pthread_create(&tid[i], NULL, rand_test_add, (void*)&argv[i]);
         } else if (i >= n_add_thread && i < n_add_thread + n_rm_thread) {
-            pthread_create(&tid[i], NULL, test_rm, (void*)&argv[1]);
+            pthread_create(&tid[i], NULL, rand_test_rm, (void*)&argv[i]);
         } else {
-            pthread_create(&tid[i], NULL, test_contains, (void*)&argv[2]); 
+            pthread_create(&tid[i], NULL, rand_test_contains, (void*)&argv[i]); 
         }
     }
     for (int i = 0; i < n_thread; ++ i) {
@@ -367,14 +417,30 @@ void Test_performance_multi_op(const int n_add_thread,
     }
 
     gettimeofday(&end, NULL);
-    std::cout << "Test performance: multi op with " << n_thread << "thread, ";
-    std::cout << " add_threads: " << n_add_thread << ",";
-    std::cout << " rm_threads: " << n_rm_thread << ",";
-    std::cout << " contains_threads: " << n_contains_thread << ",";
-    std::cout << " consuming " << time_diff(begin, end) << " s" << std::endl;
 
     delete [] tid;
     delete [] argv;
+
+    return time_diff(begin, end);
+}
+
+void Test_performance_hybird(const int n_add_thread,
+                             const int n_rm_thread,
+                             const int n_contains_thread,
+                             const int n_exp) {
+    double consuming = 0;
+    for (int i = 0; i < n_exp; ++ i) {
+        consuming += Test_performance_multi_op(n_add_thread,
+                                               n_rm_thread,
+                                               n_contains_thread);
+    }
+
+    int n_thread = n_add_thread + n_rm_thread + n_contains_thread;
+    std::cout << "Test performance: hybird operation with " << n_thread << " thread, ";
+    std::cout << " add_threads: " << n_add_thread << ",";
+    std::cout << " rm_threads: " << n_rm_thread << ",";
+    std::cout << " contains_threads: " << n_contains_thread << ",";
+    std::cout << " avge consuming " << consuming / n_exp << " s" << std::endl;
 }
 
 void TEST_PERFORMANCE() {
@@ -382,31 +448,23 @@ void TEST_PERFORMANCE() {
     Test_performance_add(5);
     Test_performance_add(10);
     Test_performance_add(20);
-    Test_performance_add(30);
     std::cout << "Test add performence successfully" << std::endl;
 
-    Test_performance_rm(1);
-    Test_performance_rm(5);
-    Test_performance_rm(10);
-    Test_performance_rm(20);
-    Test_performance_rm(30);
-    std::cout << "Test rm performence successfully" << std::endl;
+    //Test_performance_rm(1);
+    //Test_performance_rm(5);
+    //Test_performance_rm(10);
+    //Test_performance_rm(20);
+    //std::cout << "Test rm performence successfully" << std::endl;
 
-    Test_performance_contains(1);
-    Test_performance_contains(5);
-    Test_performance_contains(10);
-    Test_performance_contains(20);
-    Test_performance_contains(30);
-    std::cout << "Test contains performence successfully" << std::endl;
+    //Test_performance_contains(1);
+    //Test_performance_contains(5);
+    //Test_performance_contains(10);
+    //Test_performance_contains(20);
+    //std::cout << "Test contains performence successfully" << std::endl;
 
-    Test_performance_multi_op(1+1, 0, 8);
-    Test_performance_multi_op(4+4, 0, 2);
-
-    Test_performance_multi_op(2+2, 0, 16);
-    Test_performance_multi_op(8+8, 0, 4);
-
-    Test_performance_multi_op(3+3, 0, 24);
-    Test_performance_multi_op(12+12, 0, 6);
+    Test_performance_hybird(2, 1, 2, 10);
+    Test_performance_hybird(4, 2, 4, 10);
+    Test_performance_hybird(6, 3, 6, 10);
     std::cout << "Test multi op performence successfully" << std::endl;
 
     std::cout << "--------------------------" << std::endl;
@@ -414,8 +472,9 @@ void TEST_PERFORMANCE() {
 
 int main() {
     
-    TEST_CORRECTNESS_SINGLE_THREAD();
-    TEST_CORRECTNESS_MULTI_THREAD();
+    srand((unsigned int)time(NULL));
+    //TEST_CORRECTNESS_SINGLE_THREAD();
+    //TEST_CORRECTNESS_MULTI_THREAD();
     TEST_PERFORMANCE();
 
     /*FineGrainedLockList l;
