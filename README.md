@@ -1,25 +1,19 @@
 Lock-Free List
 --------------
 
-## 背景
-该项目对比了*不同的加锁方式*对性能的影响，数据结构采用*链表实现的集合（Set）*，支持插入，删除，查询三种操作。<br>
-加锁方式包括：<br>
-  * [x] 粗力度锁（coarse_grained_lock_list）
-    - 任何一次操作前，使用Mutex进行保护，操作结束，释放Mutex。相当于*并发操作串行化*。
-  * [x] 细力度锁（fine_grained_lock_list）
-    - 在遍历list时，仅对*访问节点*和*其前趋节点*使用Mutex保护。
-  * [x] 无锁（lock_free_list）
-    - 用原子操作更改指针
-  * [x] 无锁 + 垃圾回收（lock_free_rcu_list）
-    - 原子操作删除的节点，需要进行内存释放（垃圾回收），在对比了引用计数和批量回收两种方法后，使用批量回收方式
+对比了单机多核环境下，支持多线程操作的数据结构，采用**不同的同步方式**，对性能的影响。数据结构采用**有序链表实现的集合**，支持插入，删除，查询，它们均是线程安全的。对比了以下同步方式：<br>
+  * 粗力度锁（coarse_grained lock）
+  * 细力度锁（fine_grained lock）
+  * 无锁（lock_free）
+  * 无锁 + 垃圾回收（lock_free + rcu）
 
 ## 效果对比
 #### 实验机器配置
-8核心，支持8个线程，32GB内存
+8核，支持8线程
 
 #### 添加操作
 ![The Performance of Add](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Add_to_list_performance.png)<br>
-链表初始化为空，开启多线程，每个线程插入10000个互异元素，实验结果：<br>
+**链表初始化为空，开启多线程，每个线程插入10000个互异元素。**<br>
 随着线程数量增加，无锁（lock-free, lock-free-rcu）耗时变化不大（scaling能力最强）; 粗粒度锁(coarse-grained)耗时与线程数量成正比; 虽然细粒度锁(fine-grained)的并发程度明显高于粗粒度锁（细粒度锁CPU使用率约400%，粗粒度锁CPU使用率约100%），但是细粒度锁耗时超过粗粒度锁（频繁的加锁，解锁导致）。<br>
 #### 删除操作
 ![The Performance of Delete](https://github.com/alwaysR9/lock_free_ds/blob/master/list/result_report/Delete_to_list_performance.png)<br>

@@ -338,7 +338,7 @@ void Test_performance_rm(const int n_thread) {
     }
 
     pthread_t* tid = new pthread_t[n_thread];
-    ThreadArgv argv = ThreadArgv(&l, 1, 10000);
+    ThreadArgv argv = ThreadArgv(&l, 10000, 1);
 
     timeval begin;
     timeval end;

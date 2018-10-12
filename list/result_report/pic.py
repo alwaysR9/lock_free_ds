@@ -12,21 +12,21 @@ x = [1, 5, 10, 20]
 #fname = 'Add_to_list_performance.png'
 
 # delete performance
-#coarse = [0.001204, 0.01505, 0.02744, 0.049104]
-#fine = [0.002461, 0.029858, 0.043798, 0.101315]
-#lock_free = [0.002609, 0.006219, 0.009167, 0.007794]
-#lock_free_rcu = [0.058134, 0.261741, 0.457155, 0.935205]
-#title = 'The performance of delete'
-#fname = 'Delete_to_list_performance.png'
+coarse = [0.332658, 0.946826, 1.65139, 4.7045]
+fine = [1.68914, 2.69389, 4.9484, 12.8524]
+lock_free = [1.1877, 1.17583, 1.17385, 2.52614]
+lock_free_rcu = [1.25902, 1.25339, 1.3765, 3.09896]
+title = 'The performance of delete'
+fname = 'Delete_to_list_performance.png'
 
 # hybird performance
-x = [5, 10, 15]
-coarse = [0.4399, 0.9230, 1.2607]
-fine = [0.4334, 1.0120, 1.6584]
-lock_free = [0.2863, 0.3872, 0.4797]
-lock_free_rcu = [0.2906, 0.3610, 0.4648]
-title = 'The performance of mixed operation'
-fname = 'mixed_op_to_list_performance.png'
+#x = [5, 10, 15]
+#coarse = [0.4399, 0.9230, 1.2607]
+#fine = [0.4334, 1.0120, 1.6584]
+#lock_free = [0.2863, 0.3872, 0.4797]
+#lock_free_rcu = [0.2906, 0.3610, 0.4648]
+#title = 'The performance of mixed operation'
+#fname = 'mixed_op_to_list_performance.png'
 
 plt.plot(x, coarse, marker='o', label='coarse-grained')
 plt.plot(x, fine, marker='o', label='fine-grained')
