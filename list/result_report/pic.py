@@ -4,20 +4,20 @@ import matplotlib.pyplot as plt
 x = [1, 5, 10, 20]
 
 # add performance
-#coarse = [0.3, 1.8, 4.0, 8.7]
-#fine = [1.7, 2.2, 5.3, 14.1]
-#lock_free = [1.1, 1.3, 1.9, 3.1]
-#lock_free_rcu = [1.2, 1.3, 1.7, 3.2]
-#title = 'The performance of add'
-#fname = 'Add_to_list_performance.png'
+coarse = [0.3, 1.8, 4.0, 8.7]
+fine = [1.7, 2.2, 5.3, 14.1]
+lock_free = [1.19833, 1.28093, 1.81707, 3.13864]
+lock_free_rcu = [1.20253, 1.3221, 1.99714, 3.31791]
+title = 'The performance of add'
+fname = 'Add_to_list_performance.png'
 
 # delete performance
-coarse = [0.332658, 0.946826, 1.65139, 4.7045]
-fine = [1.68914, 2.69389, 4.9484, 12.8524]
-lock_free = [1.1877, 1.17583, 1.17385, 2.52614]
-lock_free_rcu = [1.25902, 1.25339, 1.3765, 3.09896]
-title = 'The performance of delete'
-fname = 'Delete_to_list_performance.png'
+#coarse = [0.332658, 0.946826, 1.65139, 4.7045]
+#fine = [1.68914, 2.69389, 4.9484, 12.8524]
+#lock_free = [1.1877, 1.17583, 1.17385, 2.52614]
+#lock_free_rcu = [1.25902, 1.25339, 1.3765, 3.09896]
+#title = 'The performance of delete'
+#fname = 'Delete_to_list_performance.png'
 
 # hybird performance
 #x = [5, 10, 15]
